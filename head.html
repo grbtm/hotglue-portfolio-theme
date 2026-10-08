@@ -1,0 +1,125 @@
+<!--
+  PORTFOLIO THEME FOR HOTGLUE.ME · head.html: the styles. Paste this whole file into the <head> box
+  at https://<username>.hotglue.me/code. The manual is the note at the top of body.html.
+  Newest version and help: https://github.com/grbtm/hotglue-portfolio-theme
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ---------- YOUR SETTINGS: change the values after the colons ----------
+     Colours are codes like #1a1a1a (any "colour picker" website shows the code of a colour).
+     Or use a ready-made palette: below these settings. */
+  :root {
+    --background: #ffffff;  /* the page */
+    --text: #1a1a1a;        /* text and your name */
+    --menu: #6b6b6b;        /* menu items */
+    --highlight: #1a1a1a;   /* the current page in the menu, a menu item under the mouse, links in text */
+    --line: #e3e3e3;        /* the thin line under the menu on phones */
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --side: 240px;          /* menu width, in pixels. Objects must then keep this + 20 pixels
+                               from the left edge (260 with 240); the red box knows */
+  }
+  /* Ready-made palettes. Copy a palette's line from --background to the last ; and paste it
+     inside the { } above, in place of the five colour lines (--background to --line).
+     Cream and terracotta:  --background: #f4f2ec; --text: #27322b; --menu: #6e7d6b; --highlight: #b0533c; --line: #dcddd2;
+     Dark:                  --background: #141414; --text: #ececec; --menu: #9a9a9a; --highlight: #ffffff; --line: #333333; */
+
+  /* hotglue paints the page white; a background colour set in hotglue's page menu
+     (an inline style on <html>) still wins over this */
+  html { background-color: var(--background); }
+  body { color: var(--text); }
+  /* Links in text, on the page and in the overlay's caption. hotglue's own styles make links
+     look like plain text; these more specific selectors override that. */
+  .object a:link, .object a:visited, .hpt-caption a:link, .hpt-caption a:visited {
+    color: var(--highlight); text-decoration: underline; text-underline-offset: 0.2em;
+  }
+
+  /* ---------- Menu column: name + menu (built by body.html) ---------- */
+  .hpt-side {
+    position: fixed; top: 0; left: 0; z-index: 1000;
+    width: var(--side); max-height: 100vh; overflow-y: auto;  /* long menus stay reachable */
+    padding: 40px 24px 40px 40px; box-sizing: border-box;
+    font: 15px/1.55 var(--font);
+  }
+  .hpt-side .hpt-name { display: block; font-size: 18px; font-weight: 600; color: var(--text);
+                      text-decoration: none; margin-bottom: 40px; }
+  .hpt-side ul { list-style: none; margin: 0; padding: 0; }
+  .hpt-side li { margin: 5px 0; }
+  .hpt-side li a { color: var(--menu); text-decoration: none; }
+  .hpt-side li a:hover { color: var(--highlight); }
+  .hpt-side li a[aria-current="page"] { color: var(--highlight); text-decoration: underline;
+                                       text-underline-offset: 0.25em; }
+
+  /* ---------- Editor only: faded menu as a guide, and the warnings ---------- */
+  :root { --hpt-warn: #d0302a; }
+  .hpt-side.hpt-editing { opacity: 0.35; pointer-events: none; }
+  /* not while selected: hotglue-ng shows the selection as an outline too */
+  .hpt-warn:not(.glue-selected) { outline: 3px dashed var(--hpt-warn) !important; outline-offset: 2px; }
+  /* the red box: in the menu's column, where no object may be, so it never covers one; it
+     scrolls if long */
+  .hpt-notes {
+    position: fixed; left: 8px; bottom: 8px; z-index: 1001; box-sizing: border-box;
+    width: calc(var(--side) - 16px); max-height: 60vh; overflow-y: auto;
+    padding: 10px 12px; background: #fff; border: 2px solid var(--hpt-warn); color: #1a1a1a;
+    font: 13px/1.45 var(--font); overflow-wrap: anywhere;
+  }
+  .hpt-notes ul { list-style: disc; margin: 4px 0 0 18px; padding: 0; }
+
+  /* ---------- Published page only (body.html adds these classes there) ---------- */
+  .hpt-zoomable { cursor: zoom-in; }
+  .hpt-caption-source { display: none !important; }  /* captions show only in the overlay */
+
+  /* ---------- Wider windows: page shrunk to fit ----------
+     body.html sets --hpt-fit (under 1) when the objects reach past the window's right edge.
+     zoom shrinks each object and its position alike, so the arrangement stays as placed.
+     Browsers without zoom skip this and scroll sideways instead. */
+  @media not all and (max-width: 800px) {  /* exactly the widths the phone layout doesn't take */
+    @supports (zoom: 1) {
+      body.hpt-view .object { zoom: var(--hpt-fit, 1); margin-left: var(--hpt-fit-shift, 0px); }
+    }
+    /* hotglue-ng's "centered" pages: the centred box is never wider than the window */
+    body.hpt-view #hg-centered-wrapper { max-width: 100%; }
+  }
+
+  /* ---------- Phones and narrow windows: one column ----------
+     Menu on top, objects in one column in the order body.html numbered them (reading order).
+     body.hpt-view exists on the published page only, so the editor never switches to this.
+     !important is needed to beat the positions and sizes hotglue writes on each object. */
+  @media (max-width: 800px) {
+    body.hpt-view { display: flex; flex-direction: column; }
+    /* hotglue-ng's "centered" pages: the box around the objects doesn't count, so they join the column */
+    body.hpt-view #hg-centered-wrapper { display: contents !important; }
+    body.hpt-view .hpt-side { position: static; width: auto; max-height: none; padding: 16px 20px;
+                            border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+    body.hpt-view .hpt-side .hpt-name { margin-bottom: 8px; }
+    body.hpt-view .hpt-side li { display: inline-block; margin: 2px 14px 2px 0; }
+    body.hpt-view .object {
+      position: relative !important; left: auto !important; top: auto !important;
+      width: auto !important; max-width: calc(100% - 40px); margin: 0 20px 20px !important;
+    }
+    /* Text takes its natural height; long unbroken words wrap instead of running off-screen */
+    body.hpt-view .object.text { height: auto !important; overflow-wrap: anywhere; }
+    /* Photos, videos and embeds: never wider than placed in the editor (--hpt-width), and they
+       keep their proportions (--hpt-ratio). body.html sets both on each object. */
+    body.hpt-view .object.hpt-sized {
+      width: min(var(--hpt-width), calc(100% - 40px)) !important; height: auto !important;
+      aspect-ratio: var(--hpt-ratio);
+    }
+    body.hpt-view .hpt-photo img { height: auto !important; display: block; }
+    /* hotglue.me: tiled image patterns would become big blocks of pattern: leave them out */
+    body.hpt-view .object.image:not(.hpt-photo) { display: none !important; }
+  }
+
+  /* ---------- Overlay: one photo enlarged over the page (class hpt-lightbox) ---------- */
+  .hpt-lightbox {  /* undo the browser's default dialog box styles. dvh: the visible height on
+                     phones, whose browser bars come and go */
+    width: 100%; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0;
+    border: 0; background: var(--background); color: var(--text);
+  }
+  /* flex only while open: a closed dialog must stay hidden. "safe": content taller than
+     the window starts at the top instead of being cut off */
+  .hpt-lightbox[open] { display: flex; flex-direction: column; align-items: center; justify-content: safe center; }
+  .hpt-lightbox img { max-width: 90vw; max-height: 80dvh; object-fit: contain; }
+  .hpt-lightbox .hpt-caption { max-width: 36rem; margin: 16px; font: 15px/1.5 var(--font); }
+  .hpt-lightbox button { position: absolute; top: 8px; right: 12px; background: none; border: 0;
+                        font-size: 36px; color: var(--text); cursor: pointer; }
+</style>

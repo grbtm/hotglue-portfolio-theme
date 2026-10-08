@@ -1,0 +1,442 @@
+<!--
+  PORTFOLIO THEME FOR HOTGLUE.ME · version 2026-10-08
+  Newest version and help: https://github.com/grbtm/hotglue-portfolio-theme
+  This note is the manual. Visitors don't see it.
+
+  INSTALL
+  1. Go to https://<username>.hotglue.me/code (your hotglue name instead of <username>).
+     Use this address, not the code button in the editor: that button is for one page only.
+  2. Paste all of head.html into the <head> box, and all of body.html (this note included)
+     into the <body> box. This replaces anything that was in the boxes.
+  3. Change your name and menu (see below). Save.
+  4. Open your site: your name and menu are on the left.
+  To remove the theme: empty both boxes and save.
+
+  YOUR NAME AND MENU
+  Below this note, under "YOUR NAME AND MENU START HERE":
+  - The first line is your name. It links to your start page.
+  - Then one line for each menu item: the text to show, "=", the page name.
+    Example:   Painting = painting
+  - The page name is the word after "?" in the page's address: for
+    https://<username>.hotglue.me/?painting it is painting. You can also paste the whole address.
+  - Other websites and email: the full address, starting with https:// or mailto:
+    Instagram = https://www.instagram.com/yourname
+    Email = mailto:you@example.com
+  - If a line can't be used, the red box (see below) tells you.
+
+  YOUR COLOURS, FONT AND MENU WIDTH
+  At the top of the <head> box, under "YOUR SETTINGS". Change only what comes after a colon,
+  and keep the ; at the end of each line. Ready-made colour palettes are there too.
+
+  THE THREE RULES FOR YOUR PAGES
+  An "object" is anything on a page: a photo, a text, a video.
+  When you edit a page and something breaks these rules, a white box with a red border (the
+  "red box") appears at the bottom left and says what. The objects concerned get a red dashed
+  outline: point at one to see why. Only you see this. No red box = all is well.
+
+  1. KEEP CLEAR OF THE MENU. Keep every object at least 260 pixels from the left edge of the
+     page. In the editor, the menu is shown faded.
+
+  2. CAPTIONS. To give a photo a caption, put a text just under it that starts with ~
+        ~ Example Artwork Title, 2025, oil on canvas
+     On the page it is hidden. Visitors see it, without the ~, when they click the photo.
+     Its top must be at most 80 pixels below the photo, and part of it under the photo.
+     Otherwise it stays on the page, ~ included, and the red box tells you.
+     A photo you made into a link ("make the object a link") opens the link instead and has
+     no caption: don't put a ~ text under it (the red box can't check this one).
+
+  3. PAGES UNDER A MENU PAGE. A page in your menu can have pages under it, like single
+     exhibitions under Exhibitions. Start their names with the menu page's name and "-":
+        exhibitions-2025-example-exhibition
+     On that page, "Exhibitions" is highlighted in the menu. Link to these pages from the
+     menu page. Any other page that isn't in the menu (except the start page) is in the red box.
+
+  WHAT VISITORS SEE
+  - Your name and menu on the left, the current page underlined.
+  - Click a photo: it opens large, with its caption. Arrow keys: next and previous photo.
+    Close: ×, the Esc key or the Back button. The address then ends in # and a number:
+    copy it to share that photo.
+  - On phones: the menu on top, then everything in one column, from top to bottom.
+  - On screens smaller than the one you made the page on, the page shrinks to fit.
+
+  UPDATING TO A NEW VERSION (see "Newest version" at the top of this note)
+  1. Copy your name and menu lines, and your settings from the top of the <head> box, into a
+     note on your computer.
+  2. In each box, select everything and paste the new file.
+  3. Put your lines and settings back. Save.
+
+  IF SOMETHING IS WRONG
+  - No menu, and captions show with ~ : part of a file is missing. Paste it again, all of it.
+    The <head> box must end with </style>, the <body> box with </script>.
+  - Two menus: the theme is also in the code box of a page. Open that page in the editor,
+    click the code button, empty the box, save.
+  - Colours didn't change: check that each setting has its # and ends with ;
+  - A menu item is missing or wrong, or a caption shows with ~ : open the page in the editor
+    and read the red box.
+  - Still stuck: ask at https://github.com/grbtm/hotglue-portfolio-theme/issues (needs a
+    free GitHub account).
+-->
+<!-- ===== YOUR NAME AND MENU START HERE ===== -->
+<script type="text/plain" id="hpt-menu">
+Artist Name
+About = about
+Exhibitions = exhibitions
+Painting = painting
+Sculpture = sculpture
+Poetry & Publications = poetry
+Contact = contact
+</script>
+<script>
+// DEVELOPER NOTES (the artist's instructions are the comment above; README.md and AGENTS.md
+// in the repository have the rest). hotglue inserts this at the end of <body>, after all
+// objects, both in its editor and on the published page. Each part runs in step(), so one
+// failing doesn't stop the others; errors are logged as "portfolio theme, <step name>: ...":
+//   0 "hotglue-ng phone view off"     hotglue-ng only: switch off its own phone view
+//   1 "menu"                          name and menu from the #hpt-menu block above
+//   2 "editor warnings"               editor only: the red box ("editor check"), then stop
+//   3 "captions", "phone column",     published page: match captions to photos; number
+//     "fit to window"                 objects for the phone column
+//                                     (the stacking is CSS in head.html); shrink wide pages
+//   4 "overlay"                       published page: enlarged photo, keys, Back, #<number> links
+// What it relies on in hotglue's pages (AGENTS.md, "hotglue versions", for the versions):
+// - the editor's address ends in "edit"; the start page is named "start"
+// - <body id="<page>.head"> ("head": the page's current version); objects are
+//   .object.image / .object.text with ids "<page>.head.<number>" and inline px
+//   left/top/width/height; a link is an <a> around the object (published page only)
+// - photos are <img>; on hotglue.me, tiled patterns, and every image in the editor, are
+//   backgrounds instead
+// - a background colour from hotglue's page menu is an inline style on <html>
+// - hotglue-ng: <meta name="generator" content="hotglue-ng">, "guided=0" in the address
+//   switches off its phone view, #hg-centered-wrapper around the objects of "centered"
+//   pages, .glue-selected on the selected object in the editor
+(() => {  // wrapped in a function so nothing leaks into hotglue's own global variables
+  const step = (name, fn) => {
+    try { fn(); } catch (error) { console.error(`portfolio theme, ${name}:`, error); }
+  };
+
+  const editing = /(^\?|\/)edit\/?$/.test(location.search);  // "?painting/edit", "?edit"
+  // hotglue-ng (the rewrite in development, see AGENTS.md) marks its pages; hotglue.me doesn't
+  const ng = !!document.querySelector('meta[name="generator"][content^="hotglue-ng"]');
+
+  // ---------- 0. hotglue-ng's phone view off ----------
+  // hotglue-ng has a phone view of its own ("guided" view, js/mobile-guided.js), which moves
+  // every object, our menu included, into a zoomed canvas. Its only off switch is "guided=0"
+  // in the address, read once when its script runs, after this one: add it until the page has
+  // loaded. If hotglue-ng drops the switch, the "hotglue-changed" run against its newest commit fails.
+  step("hotglue-ng phone view off", () => {
+    if (!ng || editing || /[?&]guided=/.test(location.search)) return;
+    const address = location.href;
+    history.replaceState(history.state, "",
+      `${location.pathname}${location.search ? location.search + "&" : "?"}guided=0${location.hash}`);
+    document.addEventListener("DOMContentLoaded", () => history.replaceState(history.state, "", address), { once: true });
+  });
+
+  // An object's box as placed in the editor (from hotglue's inline style, in px)
+  const placed = (obj) => ({
+    left: parseFloat(obj.style.left) || 0, top: parseFloat(obj.style.top) || 0,
+    width: parseFloat(obj.style.width) || 0, height: parseFloat(obj.style.height) || 0,
+  });
+  // Left edge of the free area beside the menu: its width (--side in head.html) + 20px (rule 1)
+  const MENU_GAP = 20;
+  const freeLeft = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--side")) || 0) + MENU_GAP;
+  const CAPTION_MAX_GAP = 80;  // rule 2: a caption's top at most this far below its photo
+  // Reading order: hotglue-ng writes objects in reading order already (top to bottom, or as
+  // the artist set it); hotglue.me writes them in the order they were created
+  const inReadingOrder = (objects) => (ng ? objects : objects.sort((a, b) =>
+    placed(a).top - placed(b).top || placed(a).left - placed(b).left));
+  const linkOrSelf = (obj) => (obj.parentElement.tagName === "A" ? obj.parentElement : obj);
+  // A photo, not a tiled pattern: an <img> on the published page; in hotglue.me's editor
+  // every image is a background, and tiled ones have background-repeat set
+  const isPhoto = (obj) => !!obj.querySelector("img") ||
+    (editing && ["", "no-repeat"].includes(obj.style.backgroundRepeat));
+  const photoObjects = () => [...document.querySelectorAll(".object.image")]
+    .filter((obj) => isPhoto(obj) && !obj.closest("a"));
+  const isCaption = (obj) => obj.matches(".object.text") && !obj.closest("a") &&
+    obj.textContent.trim().startsWith("~");
+
+  // Captions (rule 2): each ~ text goes to the photo it is closest below (0-80px, overlapping
+  // sideways; ties: the one it overlaps most). Each caption and each photo is used once.
+  // Returns a Map from photo object to caption object.
+  const matchCaptions = () => {
+    const captionTexts = [...document.querySelectorAll(".object.text")].filter(isCaption);
+    const pairs = [];
+    for (const photo of photoObjects()) {
+      const p = placed(photo);
+      for (const caption of captionTexts) {
+        const c = placed(caption), gap = c.top - (p.top + p.height);
+        const overlap = Math.min(c.left + c.width, p.left + p.width) - Math.max(c.left, p.left);
+        if (overlap > 0 && gap >= 0 && gap <= CAPTION_MAX_GAP) pairs.push({ photo, caption, gap, overlap });
+      }
+    }
+    pairs.sort((a, b) => a.gap - b.gap || b.overlap - a.overlap);
+    const match = new Map(), used = new Set();
+    for (const { photo, caption } of pairs) {
+      if (match.has(photo) || used.has(caption)) continue;
+      match.set(photo, caption);
+      used.add(caption);
+    }
+    return match;
+  };
+
+  // ---------- 1. Name and menu ----------
+  // Inserted with textContent, so whatever is typed in the menu block shows as text and is
+  // never run as code. Links start with "/": hotglue.me sites live at the root of their address.
+  const currentPage = (document.body.id || "").split(".")[0];  // <body id="<page>.head">
+  const menuProblems = [];  // listed in the editor's red box
+  const ignored = (line) => menuProblems.push(`Menu line ignored: "${line}"`);
+  let currentSection;
+  step("menu", () => {
+    const source = document.getElementById("hpt-menu");
+    if (!source) { menuProblems.push("The menu block is missing. Paste body.html again, all of it."); return; }
+    const lines = source.textContent.split("\n").map((line) => line.trim()).filter(Boolean);
+    const name = lines.shift() || "";
+    if (name.includes("=")) menuProblems.push(`The first line should be your name, not "${name}".`);
+    const menu = [];  // { label, page } for pages of this site, { label, href } for others
+    for (const line of lines) {
+      const at = line.indexOf("=");  // the first "=": addresses may contain more
+      const label = line.slice(0, at).trim(), target = line.slice(at + 1).trim();
+      if (at < 0 || !label || !target) { ignored(line); continue; }
+      let address = null;
+      try { address = new URL(target); } catch { /* not an address: a page name */ }
+      if (address && address.host !== location.host) {
+        if (["http:", "https:", "mailto:"].includes(address.protocol)) menu.push({ label, href: target });
+        else ignored(line);
+        continue;
+      }
+      // "painting", "?painting", or a copied address of this site, also from the editor
+      // ("…/?painting/edit"): the page name is the part after "?", before any "&" or "/edit"
+      const query = address ? address.search.slice(1) : target.replace(/^\?/, "");
+      let page = query.split("&")[0].replace(/\/(edit)?\/*$/, "");
+      try { page = decodeURIComponent(page); } catch { /* keep it as typed */ }
+      if (!page) { ignored(line); continue; }
+      // hotglue page names can't contain "." (it separates name and version in its ids): this
+      // is a web address without "https://", and the link would lead nowhere
+      if (page.includes(".")) {
+        menuProblems.push(`Menu line "${line}": for another website, start the address with https://`);
+      }
+      menu.push({ label, page });
+    }
+    // Highlighted: the current page, or the menu page it belongs to by name (rule 3:
+    // "exhibitions-2025-example-exhibition" belongs to "exhibitions"). Longest match wins.
+    currentSection = menu.map((item) => item.page)
+      .filter((page) => page && (currentPage === page || currentPage.startsWith(page + "-")))
+      .sort((a, b) => b.length - a.length)[0];
+
+    const side = document.createElement("header");
+    side.className = editing ? "hpt-side hpt-editing" : "hpt-side";
+    if (name) {
+      const home = Object.assign(document.createElement("a"), { className: "hpt-name", href: "/", textContent: name });
+      side.append(home);
+    }
+    const list = document.createElement("ul");
+    for (const item of menu) {
+      const link = Object.assign(document.createElement("a"), {
+        href: item.href || "/?" + encodeURIComponent(item.page), textContent: item.label });
+      if (item.page && item.page === currentSection) link.setAttribute("aria-current", "page");
+      const li = document.createElement("li");
+      li.append(link);
+      list.append(li);
+    }
+    const nav = document.createElement("nav");
+    nav.append(list);
+    side.append(nav);
+    // the page's background, so a page scrolled sideways doesn't show through the menu
+    side.style.backgroundColor = getComputedStyle(document.documentElement).backgroundColor;
+    document.body.prepend(side);
+  });
+
+  // ---------- 2. Editor: warnings for the three rules ----------
+  // The outlines and tooltips exist only in the editor's copy of the page: hotglue saves just
+  // each object's position, size and content.
+  if (editing) {
+    step("editor warnings", () => {
+      const notes = document.createElement("div");
+      notes.className = "hpt-notes";
+      document.body.append(notes);
+      const tooCloseText = `Closer than ${freeLeft} pixels from the left edge: the menu covers it.`;
+      const looseText = `Starts with ~ but doesn't count as a caption: its top must be 0-${CAPTION_MAX_GAP} pixels ` +
+        "below a photo's bottom edge and partly under the photo, with no other caption closer. " +
+        "As it is, it shows on the page, ~ included.";
+      const check = () => step("editor check", () => {
+        const attachedCaptions = new Set(matchCaptions().values());
+        let tooClose = 0, loose = 0;
+        for (const obj of document.querySelectorAll(".object")) {
+          const isTooClose = placed(obj).left < freeLeft;
+          const isLoose = !isTooClose && isCaption(obj) && !attachedCaptions.has(obj);
+          tooClose += isTooClose;
+          loose += isLoose;
+          const problem = isTooClose ? tooCloseText : isLoose ? looseText : "";
+          obj.classList.toggle("hpt-warn", !!problem);
+          obj.title = problem;
+        }
+        const lines = [...menuProblems];
+        if (tooClose) {
+          lines.push(`${tooClose} ${tooClose === 1 ? "object" : "objects"} closer than ${freeLeft} pixels ` +
+            "from the left edge (outlined).");
+        }
+        if (loose) lines.push(`${loose} ${loose === 1 ? "text" : "texts"} starting with ~ not counted as a caption (outlined).`);
+        // "start" is hotglue's start page, which usually isn't in the menu
+        if (currentPage && currentPage !== "start" && !currentSection) {
+          lines.push(`This page ("${currentPage}") is not in the menu and its name doesn't start ` +
+            `with a menu page name plus a dash (like "exhibitions-…"), so no menu item is highlighted.`);
+        }
+        const list = document.createElement("ul");
+        for (const line of lines) list.append(Object.assign(document.createElement("li"), { textContent: line }));
+        notes.replaceChildren("Portfolio theme: please check", list);
+        notes.hidden = !lines.length;
+      });
+      check();
+      // Again whenever hotglue changes the page: an object moved, resized, edited, added or
+      // redrawn (hotglue-ng redraws objects on undo, which removes our outlines). Watching only
+      // style, not class or title, and not the red box, so the check doesn't set itself off.
+      // The delay lets a drag or a burst of typing finish first.
+      const CHECK_DELAY_MS = 100;
+      let timer;
+      new MutationObserver((changes) => {
+        if (changes.every((change) => notes.contains(change.target))) return;
+        clearTimeout(timer);
+        timer = setTimeout(check, CHECK_DELAY_MS);
+      }).observe(document.body, { subtree: true, childList: true, characterData: true,
+                                  attributes: true, attributeFilter: ["style"] });
+    });
+    return;  // everything below is for the published page only
+  }
+  document.body.classList.add("hpt-view");
+  let captions = new Map();  // photo -> its caption; captions are hidden on the page
+  step("captions", () => { captions = matchCaptions(); });
+
+  // ---------- 3. Phone column and shrink to fit ----------
+  step("phone column", () => {
+    // Number objects in reading order; the stacked column (CSS) follows the numbers. Objects
+    // aren't moved in the page, so which one covers which stays as in the editor, and
+    // embedded videos don't reload.
+    const objects = inReadingOrder([...document.querySelectorAll(".object")]);
+    objects.forEach((obj, i) => { linkOrSelf(obj).style.order = i + 1; });
+    for (const obj of objects) {
+      if (obj.matches(".text") || (obj.matches(".image") && !isPhoto(obj))) continue;
+      if (obj.matches(".image")) obj.classList.add("hpt-photo");
+      // photos, videos and embeds: placed width and proportions, used in the column
+      const { width, height } = placed(obj);
+      if (!width || !height) continue;
+      obj.classList.add("hpt-sized");
+      obj.style.setProperty("--hpt-width", width + "px");
+      obj.style.setProperty("--hpt-ratio", width + " / " + height);
+    }
+  });
+
+  step("fit to window", () => {
+    // Wider windows: if the objects reach past the window's right edge, shrink them evenly
+    // (CSS zoom in head.html, which also scales their positions) so the page fits without
+    // scrolling sideways. The free area keeps starting at freeLeft, beside the menu. Hidden
+    // captions don't count. Never enlarges.
+    const RIGHT_MARGIN = 40;
+    const root = document.documentElement;
+    const hidden = new Set(captions.values());
+    const right = Math.max(freeLeft, ...[...document.querySelectorAll(".object")]
+      .filter((obj) => !hidden.has(obj)).map((obj) => { const b = placed(obj); return b.left + b.width; }));
+    // hotglue-ng's "centered" pages: objects are placed inside a box in the middle of the window
+    const wrapper = document.getElementById("hg-centered-wrapper");
+    const fit = () => {
+      const offset = wrapper ? wrapper.getBoundingClientRect().left + scrollX : 0;
+      const scale = (root.clientWidth - offset - RIGHT_MARGIN - freeLeft) / (right - freeLeft);
+      if (scale >= 1) { root.style.removeProperty("--hpt-fit"); root.style.removeProperty("--hpt-fit-shift"); return; }
+      root.style.setProperty("--hpt-fit", scale);
+      // zoom scales positions from the page's left edge; this margin (zoomed too) moves
+      // everything back so the free area still starts at freeLeft
+      root.style.setProperty("--hpt-fit-shift", (freeLeft * (1 - scale)) / scale + "px");
+    };
+    fit();
+    window.addEventListener("resize", fit);
+  });
+
+  // ---------- 4. Overlay ----------
+  // The caption's content without the ~ (keeps bold, italics, links), as new nodes
+  const captionContent = (caption) => {
+    const copy = caption.cloneNode(true);
+    const walker = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (!node.data.trim()) continue;  // skip leading whitespace-only text
+      node.data = node.data.trimStart().slice(1).trimStart();
+      break;
+    }
+    // drop trailing line breaks and blank text that hotglue's text editor leaves behind
+    const blank = (n) => n.nodeName === "BR" || (n.nodeType === Node.TEXT_NODE && !n.data.trim());
+    while (copy.lastChild && blank(copy.lastChild)) copy.lastChild.remove();
+    return [...copy.childNodes];
+  };
+
+  step("overlay", () => {
+    const photos = inReadingOrder(photoObjects()).map((obj) => ({
+      img: obj.querySelector("img"),
+      caption: captions.get(obj),
+      key: obj.id.split(".").pop(),  // the object's number: its shareable #anchor
+    }));
+    if (!photos.length) return;
+    for (const photo of photos) {
+      if (photo.caption) photo.caption.classList.add("hpt-caption-source");  // hidden by head.html
+      const captionText = photo.caption ? captionContent(photo.caption).map((n) => n.textContent).join("").trim() : "";
+      photo.img.classList.add("hpt-zoomable");
+      photo.img.tabIndex = 0;  // reachable with the Tab key
+      photo.img.setAttribute("role", "button");
+      photo.img.setAttribute("aria-label", "Enlarge: " + (photo.img.alt || captionText || "photo"));
+    }
+
+    const dialog = document.createElement("dialog");
+    dialog.className = "hpt-lightbox";
+    dialog.setAttribute("aria-label", "Photo");
+    dialog.innerHTML = '<button aria-label="Close">&times;</button><img alt=""><div class="hpt-caption"></div>';
+    document.body.append(dialog);
+    const bigImg = dialog.querySelector("img");
+    const captionBox = dialog.querySelector(".hpt-caption");
+    let shown = 0;  // index of the photo in the overlay
+    const inOverlayEntry = () => !!(history.state && history.state.hptOverlay);
+
+    const show = (i) => {
+      shown = (i + photos.length) % photos.length;  // wrap around at both ends
+      const photo = photos[shown];
+      bigImg.src = photo.img.src;  // the copy hotglue publishes (sized as placed on the page)
+      bigImg.alt = photo.img.alt;
+      captionBox.replaceChildren(...(photo.caption ? captionContent(photo.caption) : []));
+      history.replaceState({ hptOverlay: true }, "", "#" + photo.key);
+    };
+    const openOverlay = (i) => {
+      if (!dialog.open) {
+        // a history entry of its own, so Back closes the overlay (after a reload with the
+        // overlay open, the page is already on that entry)
+        if (!inOverlayEntry()) history.pushState({ hptOverlay: true }, "", location.href);
+        dialog.showModal();
+      }
+      show(i);
+    };
+
+    photos.forEach((photo, i) => {
+      photo.img.addEventListener("click", () => openOverlay(i));
+      photo.img.addEventListener("keydown", (event) => {
+        // preventDefault: otherwise the key also presses the close button, which has focus by then
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openOverlay(i); }
+      });
+    });
+    dialog.querySelector("button").addEventListener("click", () => dialog.close());
+    // a click beside the photo closes; the second click of a double-click on a photo doesn't
+    dialog.addEventListener("click", (event) => { if (event.target === dialog && event.detail < 2) dialog.close(); });
+    // closing (button, Esc, click beside) goes back past the overlay's history entry
+    dialog.addEventListener("close", () => { if (inOverlayEntry()) history.back(); });
+    window.addEventListener("popstate", () => { if (dialog.open) dialog.close(); });  // Back closes
+    document.addEventListener("keydown", (event) => {
+      if (!dialog.open || event.altKey || event.metaKey || event.ctrlKey) return;  // Alt+Left is Back
+      if (event.key === "ArrowLeft") show(shown - 1);
+      if (event.key === "ArrowRight") show(shown + 1);
+    });
+
+    // Opened from a shared link (address ends in #<number>)? Show that photo straight away,
+    // on top of the plain page. Once loaded: by then the address is final (see step 0).
+    document.addEventListener("DOMContentLoaded", () => {
+      const linked = photos.findIndex((photo) => "#" + photo.key === location.hash);
+      if (linked < 0) return;
+      if (!inOverlayEntry()) history.replaceState(null, "", location.pathname + location.search);
+      openOverlay(linked);
+    }, { once: true });
+  });
+})();
+</script>

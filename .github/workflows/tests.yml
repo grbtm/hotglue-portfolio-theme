@@ -1,0 +1,97 @@
+# Tests head.html and body.html on a real hotglue (each version in VERSIONS in
+# tests/conftest.py) in three browser engines, and checks that a change to them comes with a
+# new version. Run manually (Actions tab) to also check whether hotglue changed: the code
+# hotglue.me runs, and the newest commits of hotglue2's branches. setup-uv has no
+# major-version tags, so it is pinned by commit.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]  # webkit: Safari's engine
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Install browser
+        run: uv run --locked playwright install --with-deps ${{ matrix.browser }}
+      - name: Test
+        run: uv run --locked pytest --browser ${{ matrix.browser }} --screenshot only-on-failure --output test-results
+      - name: Keep screenshots of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed-${{ matrix.browser }}
+          path: test-results
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Check the tests' Python code
+        run: uv run --locked ruff check tests && uv run --locked ruff format --check tests
+
+  version-date:
+    # Artists tell versions apart by the date in body.html's note: it must change with the code
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: New version if head.html or body.html changed
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # nothing to compare with on a branch's first push
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then exit 0; fi
+          if git diff --quiet "$BASE" HEAD -- head.html body.html; then exit 0; fi
+          # the version on line 2: a date, maybe with -2, -3 for more releases that day
+          version_in() { git show "$1:body.html" | sed -n 2p | grep -o 'version [0-9-]*' | cut -d' ' -f2; }
+          old=$(version_in "$BASE"); new=$(version_in HEAD)
+          if [ "$new" = "$old" ] || [ "$(printf '%s\n%s\n' "$old" "$new" | sort -V | tail -1)" != "$new" ]; then
+            echo "::error file=body.html,line=2::head.html or body.html changed: set a newer version on line 2 of body.html, today's date or (a second time today) the date with -2 (now $new, before $old)"
+            exit 1
+          fi
+
+  hotglue-changed:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Install browser
+        run: uv run --locked playwright install --with-deps chromium
+      - name: Do hotglue.me and its hotglue-ng demo still run the tested versions?
+        run: uv run --locked pytest tests/test_live.py
+        env:
+          HOTGLUE_LIVE: "1"
+      - name: Do the tests pass on the newest hotglue2 commits?
+        if: always()
+        run: uv run --locked pytest --screenshot only-on-failure --output test-results
+        env:
+          HOTGLUE_LATEST: "1"
+      - name: Keep screenshots of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed-latest-hotglue
+          path: test-results

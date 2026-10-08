@@ -1,0 +1,19 @@
+[project]
+name = "hotglue-portfolio-theme"
+version = "0"
+description = "Tests for the hotglue.me portfolio theme (head.html, body.html)"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-playwright>=0.6", "ruff>=0.6"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+
+[tool.ruff]
+line-length = 120
