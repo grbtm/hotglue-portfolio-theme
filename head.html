@@ -46,8 +46,11 @@
   .hpt-side li { margin: 5px 0; }
   .hpt-side li a { color: var(--menu); text-decoration: none; }
   .hpt-side li a:hover { color: var(--highlight); }
-  .hpt-side li a[aria-current="page"] { color: var(--highlight); text-decoration: underline;
-                                       text-underline-offset: 0.25em; }
+  /* the current page, and the menu page it is under ("true") */
+  .hpt-side li a[aria-current] { color: var(--highlight); text-decoration: underline;
+                                text-underline-offset: 0.25em; }
+  /* indented menu lines (years): under their menu page, while one of its pages is open */
+  .hpt-side li ul { margin: 2px 0 0 16px; }
 
   /* ---------- Editor only: faded menu as a guide, and the warnings ---------- */
   :root { --hpt-warn: #d0302a; }
@@ -92,6 +95,9 @@
                             border-bottom: 1px solid var(--line); margin-bottom: 20px; }
     body.hpt-view .hpt-side .hpt-name { margin-bottom: 8px; }
     body.hpt-view .hpt-side li { display: inline-block; margin: 2px 14px 2px 0; }
+    /* a menu page with its years: a row of its own, the years after it */
+    body.hpt-view .hpt-side li.hpt-open { display: block; }
+    body.hpt-view .hpt-side li ul { display: inline; margin: 0 0 0 14px; }
     body.hpt-view .object {
       position: relative !important; left: auto !important; top: auto !important;
       width: auto !important; max-width: calc(100% - 40px); margin: 0 20px 20px !important;

@@ -22,6 +22,7 @@ def test_warnings_for_a_page_breaking_the_rules(site, page, errors):
     expect(notes(page)).to_contain_text('Menu line ignored: "This line has no equals sign"')
     expect(notes(page)).to_contain_text('Menu line ignored: "Script = javascript:alert(1)"')
     expect(notes(page)).to_contain_text('Menu line "No https = www.example.com/portfolio": for another website')
+    expect(notes(page)).to_contain_text('Menu line "Reels = reels" is indented under another website')
     # the red box stays in the menu's column, where it can't cover an object
     box = notes(page).bounding_box()
     assert box["x"] + box["width"] <= MIN_LEFT - 20

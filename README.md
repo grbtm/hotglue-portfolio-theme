@@ -11,6 +11,8 @@ to code: you copy two files and change a few lines of text.
 What it adds:
 
 - your name and a menu on every page, with the current page highlighted;
+- pages under a menu item, like your works by year, listed under it in the menu while one of
+  them is open;
 - click a photo to see it on its own with its caption; arrow keys show the next one, and
   each photo gets a link you can share;
 - pages made on a big screen shrink to fit smaller screens, so nobody has to scroll sideways;

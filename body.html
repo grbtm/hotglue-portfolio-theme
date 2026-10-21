@@ -1,5 +1,5 @@
 <!--
-  PORTFOLIO THEME FOR HOTGLUE.ME · version 2026-10-21
+  PORTFOLIO THEME FOR HOTGLUE.ME · version 2026-10-21-2
   Newest version and help: https://github.com/grbtm/hotglue-portfolio-theme
   This note is the manual. Visitors don't see it.
 
@@ -22,6 +22,12 @@
   - Other websites and email: the full address, starting with https:// or mailto:
     Instagram = https://www.instagram.com/yourname
     Email = mailto:you@example.com
+  - Pages under a menu page, like your works by year (see rule 3): put their lines under
+    the menu page's line and start them with two spaces. They show in the menu, under it,
+    while that menu page or one of them is open.
+    Painting = painting
+      2026 = painting-2026
+      2025 = painting-2025
   - If a line can't be used, the red box (see below) tells you.
 
   YOUR COLOURS, FONT AND MENU WIDTH
@@ -50,6 +56,10 @@
         exhibitions-2025-example-exhibition
      On that page, "Exhibitions" is highlighted in the menu. Link to these pages from the
      menu page. Any other page that isn't in the menu (except the start page) is in the red box.
+     Works by year: make a page for each year, like painting-2026 and painting-2025, each
+     with that year's works. On the painting page, put a text for each year (2026, 2025, ...)
+     and make it a link ("make the object a link") to that year's page. To also list the
+     years in the menu, see YOUR NAME AND MENU.
 
   WHAT VISITORS SEE
   - Your name and menu on the left, the current page underlined.
@@ -106,6 +116,8 @@ Contact = contact
 // - photos are <img>; on hotglue.me, tiled patterns, and every image in the editor, are
 //   backgrounds instead
 // - a background colour from hotglue's page menu is an inline style on <html>
+// - hotglue indents every line of the code boxes when it saves them (so the menu block's
+//   indented lines are found by comparing with the least indented line)
 // - hotglue-ng: <meta name="generator" content="hotglue-ng">, "guided=0" in the address
 //   switches off its phone view, #hg-centered-wrapper around the objects of "centered"
 //   pages, .glue-selected on the selected object in the editor
@@ -188,18 +200,27 @@ Contact = contact
   step("menu", () => {
     const source = document.getElementById("hpt-menu");
     if (!source) { menuProblems.push("The menu block is missing. Paste body.html again, all of it."); return; }
-    const lines = source.textContent.split("\n").map((line) => line.trim()).filter(Boolean);
-    const name = lines.shift() || "";
+    const lines = source.textContent.split("\n").filter((line) => line.trim());
+    // hotglue indents every line of the code boxes when it saves them: a line is indented if
+    // it starts with more spaces or tabs than the least indented line
+    const indent = (line) => line.length - line.trimStart().length;
+    const baseIndent = Math.min(...lines.map(indent));
+    const name = (lines.shift() || "").trim();
     if (name.includes("=")) menuProblems.push(`The first line should be your name, not "${name}".`);
-    const menu = [];  // { label, page } for pages of this site, { label, href } for others
-    for (const line of lines) {
+    // { label, page } for pages of this site, { label, href } for others; each with its
+    // indented lines (years) in .sub. An indented first line counts as not indented.
+    const menu = [];
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      const parent = indent(rawLine) > baseIndent ? menu[menu.length - 1] : undefined;
+      const add = (item) => (parent ? parent.sub : menu).push({ ...item, line, sub: [] });
       const at = line.indexOf("=");  // the first "=": addresses may contain more
       const label = line.slice(0, at).trim(), target = line.slice(at + 1).trim();
       if (at < 0 || !label || !target) { ignored(line); continue; }
       let address = null;
       try { address = new URL(target); } catch { /* not an address: a page name */ }
       if (address && address.host !== location.host) {
-        if (["http:", "https:", "mailto:"].includes(address.protocol)) menu.push({ label, href: target });
+        if (["http:", "https:", "mailto:"].includes(address.protocol)) add({ label, href: target });
         else ignored(line);
         continue;
       }
@@ -214,13 +235,22 @@ Contact = contact
       if (page.includes(".")) {
         menuProblems.push(`Menu line "${line}": for another website, start the address with https://`);
       }
-      menu.push({ label, page });
+      add({ label, page });
+    }
+    for (const item of menu) {
+      if (item.sub.length && !item.page) {
+        menuProblems.push(`Menu line "${item.sub[0].line}" is indented under another website, ` +
+          "so it never shows. Indent only lines under a page of your site.");
+      }
     }
     // Highlighted: the current page, or the menu page it belongs to by name (rule 3:
     // "exhibitions-2025-example-exhibition" belongs to "exhibitions"). Longest match wins.
-    currentSection = menu.map((item) => item.page)
-      .filter((page) => page && (currentPage === page || currentPage.startsWith(page + "-")))
-      .sort((a, b) => b.length - a.length)[0];
+    // Indented lines show only in their menu page's section, which is highlighted too.
+    const matches = (page) => page && (currentPage === page || currentPage.startsWith(page + "-"));
+    const current = menu.flatMap((item) => [item, ...item.sub].map((entry) => ({ entry, item })))
+      .filter(({ entry }) => matches(entry.page))
+      .sort((a, b) => b.entry.page.length - a.entry.page.length)[0];
+    currentSection = current?.item.page;
 
     const side = document.createElement("header");
     side.className = editing ? "hpt-side hpt-editing" : "hpt-side";
@@ -228,17 +258,26 @@ Contact = contact
       const home = Object.assign(document.createElement("a"), { className: "hpt-name", href: "/", textContent: name });
       side.append(home);
     }
-    const list = document.createElement("ul");
-    for (const item of menu) {
-      const link = Object.assign(document.createElement("a"), {
-        href: item.href || "/?" + encodeURIComponent(item.page), textContent: item.label });
-      if (item.page && item.page === currentSection) link.setAttribute("aria-current", "page");
-      const li = document.createElement("li");
-      li.append(link);
-      list.append(li);
-    }
+    const menuList = (items) => {
+      const list = document.createElement("ul");
+      for (const item of items) {
+        const link = Object.assign(document.createElement("a"), {
+          href: item.href || "/?" + encodeURIComponent(item.page), textContent: item.label });
+        const inSection = !!item.page && item.page === currentSection;
+        if (item.page && item.page === current?.entry.page) link.setAttribute("aria-current", "page");
+        else if (inSection) link.setAttribute("aria-current", "true");
+        const li = document.createElement("li");
+        li.append(link);
+        if (item.sub.length && inSection) {
+          li.className = "hpt-open";
+          li.append(menuList(item.sub));
+        }
+        list.append(li);
+      }
+      return list;
+    };
     const nav = document.createElement("nav");
-    nav.append(list);
+    nav.append(menuList(menu));
     side.append(nav);
     // the page's background, so a page scrolled sideways doesn't show through the menu
     side.style.backgroundColor = getComputedStyle(document.documentElement).backgroundColor;

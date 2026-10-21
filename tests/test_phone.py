@@ -35,3 +35,17 @@ def test_menu_on_top(site, page):
     side = page.locator("header.hpt-side").bounding_box()
     first = site.locator(page, "painting", "p1").bounding_box()
     assert side["y"] + side["height"] <= first["y"]
+
+
+def test_years_in_the_menu_on_phones(site, page):
+    """The years under a menu page share a row with it, below the other menu items before it."""
+    page.set_viewport_size(PHONE)
+    page.goto(site.view("painting-2026"))
+    side = page.locator("header.hpt-side")
+    painting = side.get_by_role("link", name="Painting", exact=True).bounding_box()
+    year = side.get_by_role("link", name="2026").bounding_box()
+    about = side.get_by_role("link", name="About").bounding_box()
+    assert year["y"] == pytest.approx(painting["y"], abs=2)  # same row
+    assert year["x"] >= painting["x"] + painting["width"] + 10  # with a gap
+    assert painting["y"] > about["y"]  # a row of its own
+    assert not scrolls_sideways(page)

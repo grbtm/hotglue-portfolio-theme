@@ -83,6 +83,14 @@ PAGES = [
             image("show", 300, 120, 500, 300, colour=(150, 100, 150)),
         ],
     ),
+    # A year under a menu page, listed in the menu (an indented line under "Painting")
+    Page(
+        "painting-2026",
+        [
+            image("y1", 300, 60, 400, 300, colour=(200, 160, 60)),
+            text("y1-cap", 300, 370, 400, 40, "~Yellow, 2026, oil on canvas"),
+        ],
+    ),
     # A menu page
     Page(
         "exhibitions",
@@ -116,13 +124,18 @@ PAGE = {page.name: page for page in PAGES}
 
 # The menu block used in the tests (what the artist edits at the top of body.html). {site} is
 # the test site's address: the last lines are pasted addresses, as artists copy them.
+# Indented lines are years under a menu page (one with a tab); "Reels" is indented under
+# another website, so it never shows and is reported.
 MENU = """Test Artist
 About = about
 Exhibitions = exhibitions
 Painting = painting
+  2026 = painting-2026
+	2025 = painting-2025
 Sculpture = sculpture
 Contact = contact
 Instagram = https://www.instagram.com/example
+  Reels = reels
 This line has no equals sign
 Pasted = {site}?painting&guided=0
 Encoded = {site}?%C3%BCber/edit

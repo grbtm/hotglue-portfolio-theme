@@ -3,6 +3,7 @@
 import pytest
 from helpers import BIG_MONITOR, LAPTOP, LAPTOPS, MIN_LEFT, MONITOR, rect, scrolls_sideways, size_id
 from hotglue.pages import PAGE
+from playwright.sync_api import expect
 
 
 def photos(page_name):
@@ -15,11 +16,14 @@ def test_menu(site, page, errors):
     side = page.locator("header.hpt-side")
     assert side.locator(".hpt-name").inner_text() == "Test Artist"
     links = side.locator("li a")
-    # "This line has no equals sign" and the javascript: line are left out
+    # "This line has no equals sign" and the javascript: line are left out; the years under
+    # Painting show (test_years_under_a_menu_page), "Reels" under Instagram never does
     assert links.all_inner_texts() == [
         "About",
         "Exhibitions",
         "Painting",
+        "2026",
+        "2025",
         "Sculpture",
         "Contact",
         "Instagram",
@@ -38,6 +42,23 @@ def test_menu(site, page, errors):
 def test_page_under_a_menu_page_highlights_it(site, page):
     page.goto(site.view("exhibitions-2025-example-show"))
     assert page.locator('header.hpt-side a[aria-current="page"]').inner_text() == "Exhibitions"
+
+
+def test_years_under_a_menu_page(site, page, errors):
+    """Indented menu lines show under their menu page, only in that page's section."""
+    side = page.locator("header.hpt-side")
+    page.goto(site.view("about"))
+    expect(side.get_by_role("link", name="2026")).to_have_count(0)
+    page.goto(site.view("painting"))
+    expect(side.locator("li li a")).to_have_text(["2026", "2025"])  # the tab-indented line too
+    assert side.get_by_role("link", name="2025").get_attribute("href") == "/?painting-2025"
+    side.get_by_role("link", name="2026").click()
+    expect(page).to_have_url(site.view("painting-2026"))
+    # the year is the current page, its menu page is still highlighted
+    expect(side.locator('a[aria-current="page"]')).to_have_text(["2026"])
+    expect(side.locator('a[aria-current="true"]')).to_have_text(["Painting", "Pasted"])  # both link to painting
+    expect(side.locator("li li a")).to_have_text(["2026", "2025"])
+    assert not errors
 
 
 @pytest.mark.parametrize("size", LAPTOPS, ids=size_id)
